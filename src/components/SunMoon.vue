@@ -56,10 +56,11 @@
                 :class="{ 'to-left': !ballStatus, 'to-right': ballStatus }">
                 <div class="sun" :class="{ 'ballHide': ballStatus }"></div>
                 <div class="moon" :class="{ 'ballHide': !ballStatus }">
-                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }" :style="{
-                        'transition': `transform ${rotateTime} linear`
-                    }">
-                        <div class="moon-crater"></div>
+                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }"
+                        :style="{ 'transition': `transform ${rotateTime} linear` }">
+                        <div v-for="crater in craters" :key="crater.id" :class="`moon-crater`"
+                            :style="{height: `calc(var(--ball-size) * ${crater.size})`, width: `calc(var(--ball-size) * ${crater.size})`,top: crater.top, left: crater.left, }">
+                        </div>
                     </div>
                     <div class="moon-shadow"></div>
                 </div>
@@ -67,10 +68,11 @@
             <div class="ball-cut-in" v-else :class="{ 'to-left': !ballStatus, 'to-right': ballStatus }">
                 <div class="sun"></div>
                 <div class="moon" :class="{ 'moon-cut-in': ballStatus }">
-                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }" :style="{
-                        'transition': `transform ${rotateTime} linear`
-                    }">
-                        <div class="moon-crater"></div>
+                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }"
+                        :style="{'transition': `transform ${rotateTime} linear`}">
+                        <div v-for="crater in craters" :key="crater.id" :class="`moon-crater`"
+                            :style="{height: `calc(var(--ball-size) * ${crater.size})`, width: `calc(var(--ball-size) * ${crater.size})`,top: crater.top, left: crater.left, }">
+                        </div>
                     </div>
                     <div class="moon-shadow"></div>
                 </div>
@@ -86,7 +88,7 @@
     const props = defineProps({
         size: {
             type: String,
-            default: '20px',
+            default: '100px',
         },
         ball: {
             type: String,
@@ -123,6 +125,26 @@
         hoverStatus.value = false
         nightHoverAnimationReset()
     }
+    const craters = [
+        {
+            id: 1,
+            size: 0.18,
+            top: '15%',
+            left: '38%',
+        },
+        {
+            id: 2,
+            size: 0.32,
+            top: '46%',
+            left: '13%',
+        },
+        {
+            id: 3,
+            size: 0.22,
+            top: '61%',
+            left: '61%',
+        },
+    ];
 
     // 配置星星大小位置
     const starList = [
@@ -565,17 +587,7 @@
             height: 100%;
             width: 100%;
             border-radius: 50%;
-
-            /* .halo-inner {
-        position: absolute;
-        height: calc(var(--box-height) * 1.67);
-        width: calc(var(--box-height) * 1.67);
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.08);
-        z-index: 3;
-        transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-    } */
-
+            
             .halo-middle {
                 position: absolute;
                 height: calc(var(--box-height) * 2.27);
@@ -609,16 +621,6 @@
                 border-radius: 50%;
                 z-index: 3;
             }
-
-            /* .halo-outer {
-        position: absolute;
-        height: calc(var(--box-height) * 2.87);
-        width: calc(var(--box-height) * 2.87);
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.08);
-        z-index: 3;
-        transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-    } */
 
             .halo-left {
                 transform: translateX(calc(-50% + var(--ball-margin) + var(--ball-size) / 2));
@@ -748,37 +750,24 @@
                 }
 
                 .moon-crater {
-                    position: fixed;
-                    height: calc(var(--ball-size) * 0.16);
-                    width: calc(var(--ball-size) * 0.16);
+                    position: absolute;
+                    height: calc(var(--ball-size) * 0.18);
+                    width: calc(var(--ball-size) * 0.18);
                     top: 15%;
                     left: 38%;
                     border-radius: 50%;
-                    background-color: rgb(156, 159, 179);
+                    background-color: rgb(145, 151, 165);
                 }
 
                 .moon-crater::before {
                     content: '';
                     position: absolute;
-                    height: calc(var(--ball-size) * 0.3);
-                    width: calc(var(--ball-size) * 0.3);
-                    top: 180%;
-                    left: -145%;
                     border-radius: 50%;
+                    height: calc(100% - var(--ball-size) * 0.02);
+                    width: calc(100% - var(--ball-size) * 0.02);
+                    top: calc(var(--ball-size) * 0.01);
+                    left: calc(var(--ball-size) * 0.01);
                     background-color: rgb(156, 159, 179);
-                    border: calc(var(--ball-size) / 100) rgb(145, 151, 165) solid;
-                }
-
-                .moon-crater::after {
-                    content: '';
-                    position: absolute;
-                    height: calc(var(--ball-size) * 0.2);
-                    width: calc(var(--ball-size) * 0.2);
-                    top: 263%;
-                    left: 130%;
-                    border-radius: 50%;
-                    background-color: rgb(156, 159, 179);
-                    border: calc(var(--ball-size) / 100) rgb(145, 151, 165) solid;
                 }
             }
         }
@@ -842,37 +831,23 @@
 
                 .moon-crater {
                     position: absolute;
-                    height: calc(var(--ball-size) * 0.16);
-                    width: calc(var(--ball-size) * 0.16);
+                    height: calc(var(--ball-size) * 0.18);
+                    width: calc(var(--ball-size) * 0.18);
                     top: 15%;
                     left: 38%;
                     border-radius: 50%;
-                    background-color: rgb(156, 159, 179);
-                    border: calc(var(--ball-size) / 100) rgb(145, 151, 165) solid;
+                    background-color: rgb(145, 151, 165);
                 }
 
                 .moon-crater::before {
                     content: '';
                     position: absolute;
-                    height: calc(var(--ball-size) * 0.3);
-                    width: calc(var(--ball-size) * 0.3);
-                    top: 180%;
-                    left: -145%;
                     border-radius: 50%;
+                    height: calc(100% - var(--ball-size) * 0.02);
+                    width: calc(100% - var(--ball-size) * 0.02);
+                    top: calc(var(--ball-size) * 0.01);
+                    left: calc(var(--ball-size) * 0.01);
                     background-color: rgb(156, 159, 179);
-                    border: calc(var(--ball-size) / 100) rgb(145, 151, 165) solid;
-                }
-
-                .moon-crater::after {
-                    content: '';
-                    position: absolute;
-                    height: calc(var(--ball-size) * 0.2);
-                    width: calc(var(--ball-size) * 0.2);
-                    top: 263%;
-                    left: 130%;
-                    border-radius: 50%;
-                    background-color: rgb(156, 159, 179);
-                    border: calc(var(--ball-size) / 100) rgb(145, 151, 165) solid;
                 }
             }
 
