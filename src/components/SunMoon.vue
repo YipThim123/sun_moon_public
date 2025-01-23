@@ -10,31 +10,22 @@
                     :style="{ height: `calc(var(--star-size) * ${star.size})`, width: `calc(var(--star-size) * ${star.size})`, top: star.top, left: star.left }">
                     <svg width="100%" height="100%" viewBox="0 0 100 100">
                         <path d="M50,0 
-           C62.5,37.5 62.5,37.5 100,50 
-           C62.5,62.5 62.5,62.5 50,100 
-           C37.5,62.5 37.5,62.5 0,50 
-           C37.5,37.5 37.5,37.5 50,0" fill="white" />
+                            C62.5,37.5 62.5,37.5 100,50 
+                            C62.5,62.5 62.5,62.5 50,100 
+                            C37.5,62.5 37.5,62.5 0,50 
+                            C37.5,37.5 37.5,37.5 50,0" fill="white" />
                     </svg>
                 </div>
+                <div class="meteor" :class="{'meteor-fall': meteorFallStatus}"></div>
             </div>
             <div class="cloud-box">
-                <div class="cloud-near" :class="{ 'cloud-near-move': ballStatus }">
-                    <div class="cloud1"></div>
-                    <div class="cloud2"></div>
-                    <div class="cloud3"></div>
-                    <div class="cloud4"></div>
-                    <div class="cloud5"></div>
-                    <div class="cloud6"></div>
-                    <div class="cloud7"></div>
+                <div class="cloud-near" :class="{ 'cloud-far-move': ballStatus }">
+                    <div v-for="(cloud, index) in cloudNearList" :key="index" class="cloud"
+                        :class="{'cloud-near-shake': shakeStatus}" :style="getCloudNearStyle(cloud)"></div>
                 </div>
                 <div class="cloud-far" :class="{ 'cloud-far-move': ballStatus }">
-                    <div class="cloud1"></div>
-                    <div class="cloud2"></div>
-                    <div class="cloud3"></div>
-                    <div class="cloud4"></div>
-                    <div class="cloud5"></div>
-                    <div class="cloud6"></div>
-                    <div class="cloud7"></div>
+                    <div v-for="(cloud, index) in cloudFarList" :key="index" class="cloud"
+                        :class="{'cloud-far-shake': shakeStatus}" :style="getCloudFarStyle(cloud)"></div>
                 </div>
             </div>
         </div>
@@ -56,9 +47,8 @@
                 :class="{ 'to-left': !ballStatus, 'to-right': ballStatus }">
                 <div class="sun" :class="{ 'ballHide': ballStatus }"></div>
                 <div class="moon" :class="{ 'ballHide': !ballStatus }">
-                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }"
-                        :style="{ 'transition': `transform ${rotateTime} linear` }">
-                        <div v-for="crater in craters" :key="crater.id" :class="`moon-crater`"
+                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }">
+                        <div v-for="crater in craterList" :key="crater.id" :class="`moon-crater`"
                             :style="{height: `calc(var(--ball-size) * ${crater.size})`, width: `calc(var(--ball-size) * ${crater.size})`,top: crater.top, left: crater.left, }">
                         </div>
                     </div>
@@ -68,9 +58,8 @@
             <div class="ball-cut-in" v-else :class="{ 'to-left': !ballStatus, 'to-right': ballStatus }">
                 <div class="sun"></div>
                 <div class="moon" :class="{ 'moon-cut-in': ballStatus }">
-                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }"
-                        :style="{'transition': `transform ${rotateTime} linear`}">
-                        <div v-for="crater in craters" :key="crater.id" :class="`moon-crater`"
+                    <div class="moon-body" :class="{ 'moon-rotate': rotateStatus }">
+                        <div v-for="crater in craterList" :key="crater.id" :class="`moon-crater`"
                             :style="{height: `calc(var(--ball-size) * ${crater.size})`, width: `calc(var(--ball-size) * ${crater.size})`,top: crater.top, left: crater.left, }">
                         </div>
                     </div>
@@ -83,7 +72,7 @@
 
 
 <script setup>
-    import { ref, reactive } from "vue";
+    import { ref, reactive, computed } from "vue";
 
     const props = defineProps({
         size: {
@@ -97,18 +86,28 @@
         halo: {
             type: String,
             default: 'flex',
-        }
+        },
+        delay: {
+            type: String || Number,
+            default: '2000',
+        },
+        finish: {
+            type: String,
+            default: 'now'
+        },
     })
 
     const ballStatus = ref(false);
     const ballTrans = () => {
         if (ballStatus.value) {
             ballStatus.value = false;
+            dayHoverAnimation()
             nightHoverAnimationReset()
         }
         else if (!ballStatus.value) {
             ballStatus.value = true;
             nightHoverAnimation()
+            dayHoverAnimationReset()
         }
     };
 
@@ -118,33 +117,85 @@
     // 鼠标悬浮事件
     const handleOver = () => {
         hoverStatus.value = true
+        dayHoverAnimation()
         nightHoverAnimation()
     }
     // 鼠标离开事件
     const handleLeave = () => {
         hoverStatus.value = false
         nightHoverAnimationReset()
+        dayHoverAnimationReset()
     }
-    const craters = [
-        {
-            id: 1,
-            size: 0.18,
-            top: '15%',
-            left: '38%',
-        },
-        {
-            id: 2,
-            size: 0.32,
-            top: '46%',
-            left: '13%',
-        },
-        {
-            id: 3,
-            size: 0.22,
-            top: '61%',
-            left: '61%',
-        },
+
+    // 云朵摆动状态
+    const shakeStatus = ref(false)
+    // 云朵摆动延迟
+    const dayHoverAnimationDelayId = ref(null)
+    // 云朵停止重复计时器
+    const shakeIntervalId = ref(null)
+    const dayHoverAnimation = () => {
+        if (!ballStatus.value && !dayHoverAnimationDelayId.value && !shakeStatus.value) {
+            dayHoverAnimationDelayId.value = setTimeout(() => {
+                if (hoverStatus.value && !ballStatus.value) {
+                    shakeStatus.value = true
+                    shakeIntervalId.value = setInterval(() => {
+                        if (!hoverStatus.value || ballStatus.value) {
+                            shakeStatus.value = false
+                            clearInterval(shakeIntervalId.value)
+                        }
+                    }, 4000)
+                }
+            }, props.delay)
+        }
+    }
+    const dayHoverAnimationReset = () => {
+        clearTimeout(dayHoverAnimationDelayId.value)
+        dayHoverAnimationDelayId.value = null
+    }
+
+    const cloudNearList = [
+        { size: 1.2, top: "15%", right: "-13%" },
+        { size: 1.3, top: "39%", right: "-5%" },
+        { size: 1.0, top: "66%", right: "5%" },
+        { size: 1.5, top: "80%", right: "26%" },
+        { size: 1.2, top: "75%", right: "38%" },
+        { size: 1.3, top: "83%", right: "55%" },
+        { size: 1.3, top: "89%", right: "68%" },
     ];
+
+    const cloudFarList = [
+        { size: 1.2, top: "2%", right: "-5%" },
+        { size: 1.4, top: "25%", right: "5%" },
+        { size: 1.0, top: "37%", right: "10%" },
+        { size: 1.5, top: "58%", right: "30%" },
+        { size: 1.2, top: "55%", right: "38%" },
+        { size: 1.3, top: "70%", right: "57%" },
+        { size: 1.1, top: "77%", right: "66%" },
+    ]
+
+    const getCloudNearStyle = (cloud) => {
+        return {
+            height: `calc(var(--near-cloud-size) / ${cloud.size})`,
+            width: `calc(var(--near-cloud-size) / ${cloud.size})`,
+            top: cloud.top,
+            right: cloud.right,
+        }
+    }
+
+    const getCloudFarStyle = (cloud) => {
+        return {
+            height: `calc(var(--far-cloud-size) / ${cloud.size})`,
+            width: `calc(var(--far-cloud-size) / ${cloud.size})`,
+            top: cloud.top,
+            right: cloud.right,
+        }
+    }
+
+    const craterList = [
+        { id: 1, size: 0.18, top: '15%', left: '38%', },
+        { id: 2, size: 0.32, top: '46%', left: '13%', },
+        { id: 3, size: 0.22, top: '61%', left: '61%', },
+    ]
 
     // 配置星星大小位置
     const starList = [
@@ -188,25 +239,26 @@
     // 防止nightHoverAnimation函数重复触发
     const nightHoverAnimationStatus = ref(false)
     // 夜晚动画延迟计时器
-    const nightHoverAnimationDelay = ref(null)
+    const nightHoverAnimationDelayId = ref(null)
     const nightHoverAnimation = () => {
-        console.log('207', nightHoverAnimationStatus.value, nightHoverAnimationDelay.value, ballStatus.value)
+        console.log('207', nightHoverAnimationStatus.value, nightHoverAnimationDelayId.value, ballStatus.value)
         // 函数处于非触发状态、闪烁计时器不存在、按钮处于夜晚状态，执行下一步
-        if (!nightHoverAnimationStatus.value && !nightHoverAnimationDelay.value && ballStatus.value) {
+        if (!nightHoverAnimationStatus.value && !nightHoverAnimationDelayId.value && ballStatus.value) {
             // 添加计时器
-            nightHoverAnimationDelay.value = setTimeout(() => {
-                // 函数改为触发状态
-                nightHoverAnimationStatus.value = true
+            nightHoverAnimationDelayId.value = setTimeout(() => {
                 console.log('209')
                 // 鼠标仍悬浮、按钮仍处于夜晚状态，执行下一步
                 if (hoverStatus.value && ballStatus.value) {
+                    // 函数改为触发状态
+                    nightHoverAnimationStatus.value = true
                     moonRotate()
                     starTwinkle()
+                    meteorFall()
                 }
                 else {
                     nightHoverAnimationReset()
                 }
-            }, 2000)
+            }, props.delay)
         }
     }
 
@@ -241,48 +293,47 @@
      * 重置闪烁状态
      */
     const nightHoverAnimationReset = () => {
-        clearTimeout(nightHoverAnimationDelay.value)
-        nightHoverAnimationDelay.value = null
+        clearTimeout(nightHoverAnimationDelayId.value)
+        nightHoverAnimationDelayId.value = null
         nightHoverAnimationStatus.value = false
+        if (props.finish === 'now') {
+            rotateStatus.value = false
+        }
     }
 
     // 控制旋转动画
     const rotateStatus = ref(false)
     // 旋转计时重复执行器
     const rotateInterval = ref(null)
-    // 旋转时间
-    const rotateTime = ref(null)
-    const moonTime = ref(12)
-    // 防止moonRotate函数重复执行
-    const moonRotateStatus = ref(false)
     const moonRotate = () => {
-        // if (!moonRotateStatus.value) {
         console.log('292')
-        rotateTime.value = `${moonTime.value}s`
         rotateStatus.value = true
-        moonRotateStatus.value = true
         if (!rotateInterval.value) {
             rotateInterval.value = setInterval(() => {
                 console.log('265')
-                if (hoverStatus.value && ballStatus.value) {
-                    rotateTime.value = '0s'
-                    rotateStatus.value = false
-                    setTimeout(() => {
-                        rotateTime.value = `${moonTime.value}s`
-                        rotateStatus.value = true
-                    }, 10)
-                }
-                else {
-                    moonRotateStatus.value = false
-                    rotateTime.value = '0s'
+                if (!hoverStatus.value || !ballStatus.value) {
                     rotateStatus.value = false
                     clearInterval(rotateInterval.value)
                     rotateInterval.value = null
                 }
-            }, moonTime.value * 1000 + 10)
+            }, 12000)
         }
     }
-    // }
+
+    const meteorFallStatus = ref(false)
+    const meteorFallInterval = ref(null)
+    const meteorFall = () => {
+        meteorFallStatus.value = true
+        if (!meteorFallInterval.value) {
+            meteorFallInterval.value = setInterval(() => {
+                if (!hoverStatus.value || !ballStatus.value) {
+                    meteorFallStatus.value = false
+                    clearInterval(meteorFallInterval.value)
+                    meteorFallInterval.value = null
+                }
+            }, 6000)
+        }
+    }
 </script>
 
 <style scoped>
@@ -382,6 +433,21 @@
             .twinkle {
                 transform: scale(0);
             }
+
+            .meteor {
+                position: absolute;
+                width: 0.2%;
+                height: 50px;
+                height: 50%;
+                background: linear-gradient(0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+                border-radius: 50%;
+                transform: translate(calc(var(--box-height) * 1.75), calc(var(--box-height) * -0.35)) rotate(255deg);
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0.8);
+            }
+
+            .meteor-fall {
+                animation: meteor-fall 6s linear infinite;
+            }
         }
 
         .cloud-box {
@@ -397,6 +463,14 @@
                 transform: translateY(100%);
             }
 
+            .cloud-near-shake {
+                animation: cloud-near-shake 4s linear infinite;
+            }
+
+            .cloud-far-shake {
+                animation: cloud-far-shake 4s linear infinite;
+            }
+
             .cloud-near {
                 position: absolute;
                 height: var(--box-height);
@@ -404,78 +478,8 @@
                 transition: transform var(--near-cloud-duration) cubic-bezier(0.49, 1.57, 0.04, 0.83);
                 z-index: 2;
 
-                .cloud1 {
+                .cloud {
                     position: absolute;
-                    height: calc(var(--near-cloud-size)/1.2);
-                    width: calc(var(--near-cloud-size)/1.2);
-                    top: 15%;
-                    right: -13%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud2 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size) / 1.3);
-                    width: calc(var(--near-cloud-size) / 1.3);
-                    top: 39%;
-                    right: -5%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud3 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size));
-                    width: calc(var(--near-cloud-size));
-                    top: 66%;
-                    right: 5%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud4 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size)/ 1.5);
-                    width: calc(var(--near-cloud-size) / 1.5);
-                    top: 80%;
-                    right: 26%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud5 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size) / 1.2);
-                    width: calc(var(--near-cloud-size)/ 1.2);
-                    top: 75%;
-                    right: 38%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud6 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size) /1.3);
-                    width: calc(var(--near-cloud-size)/1.3);
-                    top: 83%;
-                    right: 55%;
-                    border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
-                }
-
-                .cloud7 {
-                    position: absolute;
-                    height: calc(var(--near-cloud-size) /1.3);
-                    width: calc(var(--near-cloud-size)/1.3);
-                    top: 89%;
-                    right: 68%;
                     border-radius: 50%;
                     background-color: white;
                     z-index: 2;
@@ -489,78 +493,8 @@
                 transition: transform var(--far-cloud-duration) cubic-bezier(0.49, 1.57, 0.28, 0.81);
                 z-index: 1;
 
-                .cloud1 {
+                .cloud {
                     position: absolute;
-                    height: calc(var(--ball-size)/1.2);
-                    width: calc(var(--ball-size)/1.2);
-                    top: 0%;
-                    right: -5%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud2 {
-                    position: absolute;
-                    height: calc(var(--ball-size) / 1.4);
-                    width: calc(var(--ball-size) / 1.4);
-                    top: 25%;
-                    right: 5%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud3 {
-                    position: absolute;
-                    height: calc(var(--ball-size));
-                    width: calc(var(--ball-size));
-                    top: 37%;
-                    right: 10%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud4 {
-                    position: absolute;
-                    height: calc(var(--ball-size)/ 1.5);
-                    width: calc(var(--ball-size) / 1.5);
-                    top: 58%;
-                    right: 30%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud5 {
-                    position: absolute;
-                    height: calc(var(--ball-size) / 1.2);
-                    width: calc(var(--ball-size)/ 1.2);
-                    top: 55%;
-                    right: 38%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud6 {
-                    position: absolute;
-                    height: calc(var(--ball-size) /1.3);
-                    width: calc(var(--ball-size)/1.3);
-                    top: 70%;
-                    right: 57%;
-                    border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
-                    z-index: 1;
-                }
-
-                .cloud7 {
-                    position: absolute;
-                    height: calc(var(--ball-size) /1.1);
-                    width: calc(var(--ball-size)/1.1);
-                    top: 77%;
-                    right: 66%;
                     border-radius: 50%;
                     background-color: rgb(168, 197, 227);
                     z-index: 1;
@@ -587,7 +521,7 @@
             height: 100%;
             width: 100%;
             border-radius: 50%;
-            
+
             .halo-middle {
                 position: absolute;
                 height: calc(var(--box-height) * 2.27);
@@ -736,7 +670,7 @@
                 }
 
                 .moon-rotate {
-                    transform: rotate(360deg);
+                    animation: moon-rotate 12s linear infinite;
                 }
 
                 .moon-shadow {
@@ -816,7 +750,7 @@
                 }
 
                 .moon-rotate {
-                    transform: rotate(360deg);
+                    animation: moon-rotate 12s linear infinite;
                 }
 
                 .moon-shadow {
@@ -854,6 +788,124 @@
             .moon-cut-in {
                 transform: translateX(0%);
             }
+        }
+    }
+</style>
+
+<style>
+    @keyframes moon-rotate {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes cloud-near-shake {
+        0% {
+            transform: translateY(0);
+        }
+
+        15% {
+            transform: translateY(2.8%);
+        }
+
+        21% {
+            transform: translateY(3.6%);
+        }
+
+        25% {
+            transform: translateY(4%);
+        }
+
+        29% {
+            transform: translateY(3.6%);
+        }
+
+        35% {
+            transform: translateY(2.8%);
+        }
+
+        50% {
+            transform: translateY(0);
+        }
+
+        65% {
+            transform: translateY(-2.8%);
+        }
+
+        71% {
+            transform: translateY(-3.6%);
+        }
+
+        75% {
+            transform: translateY(-4%);
+        }
+
+        79% {
+            transform: translateY(-3.6%);
+        }
+
+        85% {
+            transform: translateY(-2.8%);
+        }
+
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes cloud-far-shake {
+        0% {
+            transform: translateY(0);
+        }
+
+        18% {
+            transform: translateY(1.7%);
+        }
+
+        25% {
+            transform: translateY(2%);
+        }
+
+        32% {
+            transform: translateY(1.7%);
+        }
+
+        50% {
+            transform: translateY(0);
+        }
+
+        68% {
+            transform: translateY(-1.7%);
+        }
+
+        75% {
+            transform: translateY(-2%);
+        }
+
+        82% {
+            transform: translateY(-1.7%);
+        }
+
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes meteor-fall {
+        0% {
+            transform: translate(calc(var(--box-height) * 1.75), calc(var(--box-height) * -0.35)) rotate(255deg);
+        }
+
+        20% {
+            transform: translate(calc(var(--box-height) * -0.625), calc(var(--box-height) * 0.3)) rotate(255deg);
+        }
+
+        100% {
+            transform: translate(calc(var(--box-height) * -0.625), calc(var(--box-height) * 0.3)) rotate(255deg);
         }
     }
 </style>
