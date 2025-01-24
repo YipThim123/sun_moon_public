@@ -74,38 +74,54 @@
 <script setup>
     import { ref, reactive, computed } from "vue";
 
+    const emit = defineEmits(['onStatus']);
+
     const props = defineProps({
         size: {
-            type: String,
-            default: '100px',
+            type: [String, Number],
+            default: '20px',
+            // 按钮高度, 示例: '20', '20px'
         },
         ball: {
             type: String,
             default: 'cut-in'
+            // cut-in: 月球切入出现, gradient: 月球渐变出现
         },
         halo: {
             type: String,
             default: 'flex',
+            // flex: 光晕弹性运动, linear: 光晕线性运动
         },
         delay: {
-            type: String || Number,
+            type: [String, Number],
             default: '2000',
+            // 鼠标悬浮动画的延迟时间, 示例: '2000'
         },
         finish: {
             type: String,
             default: 'now'
+            // now: 鼠标移出后的月亮瞬间回到原位, delay: 鼠标移出后的月亮转至终点
         },
     })
+
+    const parsedSize = computed(() => {
+        if (typeof props.size[-2, -1] !== 'px') {
+            return `${props.size}px`;
+        }
+        return props.size;
+    });
 
     const ballStatus = ref(false);
     const ballTrans = () => {
         if (ballStatus.value) {
             ballStatus.value = false;
+            emit('onStatus', ballStatus.value);
             dayHoverAnimation()
             nightHoverAnimationReset()
         }
         else if (!ballStatus.value) {
             ballStatus.value = true;
+            emit('onStatus', ballStatus.value);
             nightHoverAnimation()
             dayHoverAnimationReset()
         }
@@ -241,12 +257,10 @@
     // 夜晚动画延迟计时器
     const nightHoverAnimationDelayId = ref(null)
     const nightHoverAnimation = () => {
-        console.log('207', nightHoverAnimationStatus.value, nightHoverAnimationDelayId.value, ballStatus.value)
         // 函数处于非触发状态、闪烁计时器不存在、按钮处于夜晚状态，执行下一步
         if (!nightHoverAnimationStatus.value && !nightHoverAnimationDelayId.value && ballStatus.value) {
             // 添加计时器
             nightHoverAnimationDelayId.value = setTimeout(() => {
-                console.log('209')
                 // 鼠标仍悬浮、按钮仍处于夜晚状态，执行下一步
                 if (hoverStatus.value && ballStatus.value) {
                     // 函数改为触发状态
@@ -267,7 +281,6 @@
             twinkStar.twinkleShowStatus = true
             if (!twinkStar.twinkleInterval) {
                 twinkStar.twinkleInterval = setInterval(() => {
-                    console.log('220')
                     twinkStar.twinkleId = (twinkStar.twinkleId + 3) % 11;
                     if (!hoverStatus.value || !ballStatus.value) {
                         clearInterval(twinkStar.twinkleInterval)
@@ -337,9 +350,13 @@
 </script>
 
 <style scoped>
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
     .button-box {
         /* 按钮高度 */
-        --box-height: v-bind(size);
+        --box-height: v-bind(parsedSize);
         /* 按钮宽度 */
         --box-width: calc(var(--box-height) * 2.5);
         /* 小球直径 */
@@ -375,418 +392,420 @@
         overflow: hidden;
         cursor: pointer;
         z-index: 1;
-    }
 
-    /* 天空 */
-    .sky {
-        position: absolute;
-        height: var(--box-height);
-        width: var(--box-width);
-
-        .inner-shadow {
+        /* 天空 */
+        .sky {
             position: absolute;
             height: var(--box-height);
             width: var(--box-width);
-            border-radius: calc(var(--box-height) / 2);
-            box-shadow: inset 0 0 0.5em rgba(0, 0, 0, 0.6);
-            z-index: 4;
+            overflow: hidden;
+
+            .inner-shadow {
+                position: absolute;
+                height: var(--box-height);
+                width: var(--box-width);
+                border-radius: calc(var(--box-height) / 2);
+                box-shadow: inset 0 0 0.5em rgba(0, 0, 0, 0.6);
+                z-index: 4;
+            }
+
+            .day {
+                height: var(--box-height);
+                width: var(--box-width);
+                background-color: rgb(70, 133, 196);
+                transition: background-color var(--sky-duration);
+            }
+
+            .night {
+                height: var(--box-height);
+                width: var(--box-width);
+                background-color: rgb(23, 30, 51);
+                transition: background-color var(--sky-duration);
+            }
         }
 
-        .day {
-            height: var(--box-height);
-            width: var(--box-width);
-            background-color: rgb(70, 133, 196);
-            transition: background-color var(--sky-duration);
-        }
-
-        .night {
-            height: var(--box-height);
-            width: var(--box-width);
-            background-color: rgb(23, 30, 51);
-            transition: background-color var(--sky-duration);
-        }
-    }
-
-    .star-cloud-box {
-        position: absolute;
-        height: var(--box-height);
-        width: var(--box-width);
-
-        .star-move {
-            transform: translateY(-100%);
-        }
-
-        .star-box {
+        .star-cloud-box {
             position: absolute;
             height: var(--box-height);
             width: var(--box-width);
-            transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+            overflow: hidden;
 
-            .star {
+            .star-move {
+                transform: translateY(-100%);
+            }
+
+            .star-box {
+                position: absolute;
+                height: var(--box-height);
+                width: var(--box-width);
+                transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+
+                .star {
+                    position: absolute;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    transition: var(--twinkle-duration);
+                }
+
+                .twinkle {
+                    transform: scale(0);
+                }
+
+                .meteor {
+                    position: absolute;
+                    width: 0.2%;
+                    height: 50px;
+                    height: 50%;
+                    background: linear-gradient(0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+                    border-radius: 50%;
+                    transform: translate(calc(var(--box-height) * 1.75), calc(var(--box-height) * -0.35)) rotate(255deg);
+                    box-shadow: 0 0 0px rgba(255, 255, 255, 0.8);
+                }
+
+                .meteor-fall {
+                    animation: meteor-fall 6s linear infinite;
+                }
+            }
+
+            .cloud-box {
+                position: absolute;
+                height: var(--box-height);
+                width: var(--box-width);
+
+                .cloud-near-move {
+                    transform: translateY(100%);
+                }
+
+                .cloud-far-move {
+                    transform: translateY(100%);
+                }
+
+                .cloud-near-shake {
+                    animation: cloud-near-shake 4s linear infinite;
+                }
+
+                .cloud-far-shake {
+                    animation: cloud-far-shake 4s linear infinite;
+                }
+
+                .cloud-near {
+                    position: absolute;
+                    height: var(--box-height);
+                    width: var(--box-width);
+                    transition: transform var(--near-cloud-duration) cubic-bezier(0.49, 1.57, 0.04, 0.83);
+                    z-index: 2;
+
+                    .cloud {
+                        position: absolute;
+                        border-radius: 50%;
+                        background-color: white;
+                        z-index: 2;
+                    }
+                }
+
+                .cloud-far {
+                    position: absolute;
+                    height: var(--box-height);
+                    width: var(--box-width);
+                    transition: transform var(--far-cloud-duration) cubic-bezier(0.49, 1.57, 0.28, 0.81);
+                    z-index: 1;
+
+                    .cloud {
+                        position: absolute;
+                        border-radius: 50%;
+                        background-color: rgb(168, 197, 227);
+                        z-index: 1;
+                    }
+                }
+            }
+        }
+
+        /* 光晕 */
+        .halo-box {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            height: var(--box-height);
+            width: var(--box-width);
+            border-radius: var(--box-height);
+            overflow: hidden;
+
+
+            .halo-linear {
                 position: absolute;
                 display: flex;
-                justify-content: center;
                 align-items: center;
-                transition: var(--twinkle-duration);
-            }
-
-            .twinkle {
-                transform: scale(0);
-            }
-
-            .meteor {
-                position: absolute;
-                width: 0.2%;
-                height: 50px;
-                height: 50%;
-                background: linear-gradient(0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+                height: 100%;
+                width: 100%;
                 border-radius: 50%;
-                transform: translate(calc(var(--box-height) * 1.75), calc(var(--box-height) * -0.35)) rotate(255deg);
-                box-shadow: 0 0 0px rgba(255, 255, 255, 0.8);
-            }
 
-            .meteor-fall {
-                animation: meteor-fall 6s linear infinite;
-            }
-        }
-
-        .cloud-box {
-            position: absolute;
-            height: var(--box-height);
-            width: var(--box-width);
-
-            .cloud-near-move {
-                transform: translateY(100%);
-            }
-
-            .cloud-far-move {
-                transform: translateY(100%);
-            }
-
-            .cloud-near-shake {
-                animation: cloud-near-shake 4s linear infinite;
-            }
-
-            .cloud-far-shake {
-                animation: cloud-far-shake 4s linear infinite;
-            }
-
-            .cloud-near {
-                position: absolute;
-                height: var(--box-height);
-                width: var(--box-width);
-                transition: transform var(--near-cloud-duration) cubic-bezier(0.49, 1.57, 0.04, 0.83);
-                z-index: 2;
-
-                .cloud {
+                .halo-middle {
                     position: absolute;
+                    height: calc(var(--box-height) * 2.27);
+                    width: calc(var(--box-height) * 2.27);
                     border-radius: 50%;
-                    background-color: white;
-                    z-index: 2;
+                    background-color: rgba(255, 255, 255, 0.08);
+                    z-index: 3;
+                    transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                }
+
+                .halo-middle::before {
+                    content: '';
+                    position: absolute;
+                    height: calc(var(--box-height) * 1.67);
+                    width: calc(var(--box-height) * 1.67);
+                    left: calc(var(--box-height) * 0.3);
+                    top: calc(var(--box-height) * 0.3);
+                    background-color: rgba(255, 255, 255, 0.08);
+                    border-radius: 50%;
+                    z-index: 3;
+                }
+
+                .halo-middle::after {
+                    content: '';
+                    position: absolute;
+                    height: calc(var(--box-height) * 2.87);
+                    width: calc(var(--box-height) * 2.87);
+                    left: calc(var(--box-height) * -0.3);
+                    top: calc(var(--box-height) * -0.3);
+                    background-color: rgba(255, 255, 255, 0.08);
+                    border-radius: 50%;
+                    z-index: 3;
+                }
+
+                .halo-left {
+                    transform: translateX(calc(-50% + var(--ball-margin) + var(--ball-size) / 2));
+                }
+
+                .halo-right {
+                    transform: translateX(calc(var(--box-width) - 50% - var(--ball-margin) - var(--ball-size) / 2));
                 }
             }
 
-            .cloud-far {
+            .halo-flex {
                 position: absolute;
-                height: var(--box-height);
-                width: var(--box-width);
-                transition: transform var(--far-cloud-duration) cubic-bezier(0.49, 1.57, 0.28, 0.81);
-                z-index: 1;
+                display: flex;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+                border-radius: 50%;
 
-                .cloud {
+                .halo-inner {
                     position: absolute;
+                    height: calc(var(--box-height) * 1.47);
+                    width: calc(var(--box-height) * 1.47);
                     border-radius: 50%;
-                    background-color: rgb(168, 197, 227);
+                    background-color: rgba(255, 255, 255, 0.08);
+                    z-index: 3;
+                    transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                }
+
+                .halo-middle {
+                    position: absolute;
+                    height: calc(var(--box-height) * 1.77);
+                    width: calc(var(--box-height) * 1.77);
+                    border-radius: 50%;
+                    background-color: rgba(255, 255, 255, 0.08);
+                    z-index: 3;
+                    transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                }
+
+                .halo-outer {
+                    position: absolute;
+                    height: calc(var(--box-height) * 2.07);
+                    width: calc(var(--box-height) * 2.07);
+                    border-radius: 50%;
+                    background-color: rgba(255, 255, 255, 0.08);
+                    z-index: 3;
+                    transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                }
+
+                .halo-left {
+                    transform: translateX(calc(-1 * var(--ball-margin)));
+                }
+
+                .halo-right {
+                    transform: translateX(calc(var(--box-width) - 100% + var(--ball-margin)));
+                }
+            }
+        }
+
+        /* 太阳和月亮 */
+        .ball-box {
+            position: absolute;
+            height: var(--ball-size);
+            width: var(--ball-size);
+            border-radius: 50%;
+
+            .to-left {
+                transform: translateX(var(--ball-margin));
+            }
+
+            .to-right {
+                transform: translateX(calc(var(--box-width) - var(--ball-size) - var(--ball-margin)));
+            }
+
+            .ball-gradient {
+                position: absolute;
+                height: var(--ball-size);
+                width: var(--ball-size);
+                border-radius: 50%;
+                box-shadow: 0.3em 0.3em 0.5em rgba(0, 0, 0, 0.6);
+                transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                z-index: 5;
+
+                .ballHide {
+                    opacity: 0;
+                }
+
+                .sun {
+                    position: absolute;
+                    height: var(--ball-size);
+                    width: var(--ball-size);
+                    border-radius: 50%;
+                    background-color: rgb(243, 198, 43);
+                    box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
+                        inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
+                    z-index: 1;
+                    transition: opacity var(--opacity-duration);
+                }
+
+                .moon {
+                    position: absolute;
+                    height: var(--ball-size);
+                    width: var(--ball-size);
+                    border-radius: 50%;
+                    z-index: 1;
+                    transition: opacity var(--opacity-duration), transform 5s linear;
+
+                    .moon-body {
+                        position: absolute;
+                        height: var(--ball-size);
+                        width: var(--ball-size);
+                        border-radius: 50%;
+                        background-color: rgb(195, 201, 211);
+                    }
+
+                    .moon-rotate {
+                        animation: moon-rotate 12s linear infinite;
+                    }
+
+                    .moon-shadow {
+                        position: absolute;
+                        height: var(--ball-size);
+                        width: var(--ball-size);
+                        border-radius: 50%;
+                        box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
+                            inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
+                        z-index: 2;
+                    }
+
+                    .moon-crater {
+                        position: absolute;
+                        height: calc(var(--ball-size) * 0.18);
+                        width: calc(var(--ball-size) * 0.18);
+                        top: 15%;
+                        left: 38%;
+                        border-radius: 50%;
+                        background-color: rgb(145, 151, 165);
+                    }
+
+                    .moon-crater::before {
+                        content: '';
+                        position: absolute;
+                        border-radius: 50%;
+                        height: calc(100% - var(--ball-size) * 0.02);
+                        width: calc(100% - var(--ball-size) * 0.02);
+                        top: calc(var(--ball-size) * 0.01);
+                        left: calc(var(--ball-size) * 0.01);
+                        background-color: rgb(156, 159, 179);
+                    }
+                }
+            }
+
+            .ball-cut-in {
+                position: absolute;
+                height: var(--ball-size);
+                width: var(--ball-size);
+                border-radius: 50%;
+                overflow: hidden;
+                box-shadow: 0.3em 0.3em 0.5em rgba(0, 0, 0, 0.6);
+                transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
+                z-index: 5;
+
+                .ballHide {
+                    opacity: 0 !important;
+                }
+
+                .sun {
+                    position: absolute;
+                    height: var(--ball-size);
+                    width: var(--ball-size);
+                    border-radius: 50%;
+                    background-color: rgb(243, 198, 43);
+                    box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
+                        inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
                     z-index: 1;
                 }
-            }
-        }
-    }
 
-    /* 光晕 */
-    .halo-box {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        height: var(--box-height);
-        width: var(--box-width);
-        border-radius: var(--box-height);
-        overflow: hidden;
-
-
-        .halo-linear {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            border-radius: 50%;
-
-            .halo-middle {
-                position: absolute;
-                height: calc(var(--box-height) * 2.27);
-                width: calc(var(--box-height) * 2.27);
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.08);
-                z-index: 3;
-                transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            }
-
-            .halo-middle::before {
-                content: '';
-                position: absolute;
-                height: calc(var(--box-height) * 1.67);
-                width: calc(var(--box-height) * 1.67);
-                left: calc(var(--box-height) * 0.3);
-                top: calc(var(--box-height) * 0.3);
-                background-color: rgba(255, 255, 255, 0.08);
-                border-radius: 50%;
-                z-index: 3;
-            }
-
-            .halo-middle::after {
-                content: '';
-                position: absolute;
-                height: calc(var(--box-height) * 2.87);
-                width: calc(var(--box-height) * 2.87);
-                left: calc(var(--box-height) * -0.3);
-                top: calc(var(--box-height) * -0.3);
-                background-color: rgba(255, 255, 255, 0.08);
-                border-radius: 50%;
-                z-index: 3;
-            }
-
-            .halo-left {
-                transform: translateX(calc(-50% + var(--ball-margin) + var(--ball-size) / 2));
-            }
-
-            .halo-right {
-                transform: translateX(calc(var(--box-width) - 50% - var(--ball-margin) - var(--ball-size) / 2));
-            }
-        }
-
-        .halo-flex {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            border-radius: 50%;
-
-            .halo-inner {
-                position: absolute;
-                height: calc(var(--box-height) * 1.47);
-                width: calc(var(--box-height) * 1.47);
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.08);
-                z-index: 3;
-                transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            }
-
-            .halo-middle {
-                position: absolute;
-                height: calc(var(--box-height) * 1.77);
-                width: calc(var(--box-height) * 1.77);
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.08);
-                z-index: 3;
-                transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            }
-
-            .halo-outer {
-                position: absolute;
-                height: calc(var(--box-height) * 2.07);
-                width: calc(var(--box-height) * 2.07);
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.08);
-                z-index: 3;
-                transition: all var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            }
-
-            .halo-left {
-                transform: translateX(calc(-1 * var(--ball-margin)));
-            }
-
-            .halo-right {
-                transform: translateX(calc(var(--box-width) - 100% + var(--ball-margin)));
-            }
-        }
-    }
-
-    /* 太阳和月亮 */
-    .ball-box {
-        position: absolute;
-        height: var(--ball-size);
-        width: var(--ball-size);
-        border-radius: 50%;
-
-        .to-left {
-            transform: translateX(var(--ball-margin));
-        }
-
-        .to-right {
-            transform: translateX(calc(var(--box-width) - var(--ball-size) - var(--ball-margin)));
-        }
-
-        .ball-gradient {
-            position: absolute;
-            height: var(--ball-size);
-            width: var(--ball-size);
-            border-radius: 50%;
-            box-shadow: 0.3em 0.3em 0.5em rgba(0, 0, 0, 0.6);
-            transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            z-index: 5;
-
-            .ballHide {
-                opacity: 0;
-            }
-
-            .sun {
-                position: absolute;
-                height: var(--ball-size);
-                width: var(--ball-size);
-                border-radius: 50%;
-                background-color: rgb(243, 198, 43);
-                box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
-                    inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
-                z-index: 1;
-                transition: opacity var(--opacity-duration);
-            }
-
-            .moon {
-                position: absolute;
-                height: var(--ball-size);
-                width: var(--ball-size);
-                border-radius: 50%;
-                z-index: 1;
-                transition: opacity var(--opacity-duration), transform 5s linear;
-
-                .moon-body {
+                .moon {
                     position: absolute;
                     height: var(--ball-size);
                     width: var(--ball-size);
                     border-radius: 50%;
                     background-color: rgb(195, 201, 211);
+                    z-index: 1;
+                    transform: translateX(100%);
+                    transition: transform var(--opacity-duration);
+
+                    .moon-body {
+                        position: absolute;
+                        height: var(--ball-size);
+                        width: var(--ball-size);
+                        border-radius: 50%;
+                        background-color: rgb(195, 201, 211);
+                    }
+
+                    .moon-rotate {
+                        animation: moon-rotate 12s linear infinite;
+                    }
+
+                    .moon-shadow {
+                        position: absolute;
+                        height: var(--ball-size);
+                        width: var(--ball-size);
+                        border-radius: 50%;
+                        box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
+                            inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
+                        z-index: 2;
+                    }
+
+                    .moon-crater {
+                        position: absolute;
+                        height: calc(var(--ball-size) * 0.18);
+                        width: calc(var(--ball-size) * 0.18);
+                        top: 15%;
+                        left: 38%;
+                        border-radius: 50%;
+                        background-color: rgb(145, 151, 165);
+                    }
+
+                    .moon-crater::before {
+                        content: '';
+                        position: absolute;
+                        border-radius: 50%;
+                        height: calc(100% - var(--ball-size) * 0.02);
+                        width: calc(100% - var(--ball-size) * 0.02);
+                        top: calc(var(--ball-size) * 0.01);
+                        left: calc(var(--ball-size) * 0.01);
+                        background-color: rgb(156, 159, 179);
+                    }
                 }
 
-                .moon-rotate {
-                    animation: moon-rotate 12s linear infinite;
+                .moon-cut-in {
+                    transform: translateX(0%);
                 }
-
-                .moon-shadow {
-                    position: absolute;
-                    height: var(--ball-size);
-                    width: var(--ball-size);
-                    border-radius: 50%;
-                    box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
-                        inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
-                    z-index: 2;
-                }
-
-                .moon-crater {
-                    position: absolute;
-                    height: calc(var(--ball-size) * 0.18);
-                    width: calc(var(--ball-size) * 0.18);
-                    top: 15%;
-                    left: 38%;
-                    border-radius: 50%;
-                    background-color: rgb(145, 151, 165);
-                }
-
-                .moon-crater::before {
-                    content: '';
-                    position: absolute;
-                    border-radius: 50%;
-                    height: calc(100% - var(--ball-size) * 0.02);
-                    width: calc(100% - var(--ball-size) * 0.02);
-                    top: calc(var(--ball-size) * 0.01);
-                    left: calc(var(--ball-size) * 0.01);
-                    background-color: rgb(156, 159, 179);
-                }
-            }
-        }
-
-        .ball-cut-in {
-            position: absolute;
-            height: var(--ball-size);
-            width: var(--ball-size);
-            border-radius: 50%;
-            overflow: hidden;
-            box-shadow: 0.3em 0.3em 0.5em rgba(0, 0, 0, 0.6);
-            transition: transform var(--move-duration) cubic-bezier(0.26, 0.97, 0.2, 1.08);
-            z-index: 5;
-
-            .ballHide {
-                opacity: 0 !important;
-            }
-
-            .sun {
-                position: absolute;
-                height: var(--ball-size);
-                width: var(--ball-size);
-                border-radius: 50%;
-                background-color: rgb(243, 198, 43);
-                box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
-                    inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
-                z-index: 1;
-            }
-
-            .moon {
-                position: absolute;
-                height: var(--ball-size);
-                width: var(--ball-size);
-                border-radius: 50%;
-                background-color: rgb(195, 201, 211);
-                z-index: 1;
-                transform: translateX(100%);
-                transition: transform var(--opacity-duration);
-
-                .moon-body {
-                    position: absolute;
-                    height: var(--ball-size);
-                    width: var(--ball-size);
-                    border-radius: 50%;
-                    background-color: rgb(195, 201, 211);
-                }
-
-                .moon-rotate {
-                    animation: moon-rotate 12s linear infinite;
-                }
-
-                .moon-shadow {
-                    position: absolute;
-                    height: var(--ball-size);
-                    width: var(--ball-size);
-                    border-radius: 50%;
-                    box-shadow: inset 0.3em 0.3em 0.3em rgba(255, 255, 255, 0.8),
-                        inset -0.3em -0.3em 1em rgba(0, 0, 0, 0.4);
-                    z-index: 2;
-                }
-
-                .moon-crater {
-                    position: absolute;
-                    height: calc(var(--ball-size) * 0.18);
-                    width: calc(var(--ball-size) * 0.18);
-                    top: 15%;
-                    left: 38%;
-                    border-radius: 50%;
-                    background-color: rgb(145, 151, 165);
-                }
-
-                .moon-crater::before {
-                    content: '';
-                    position: absolute;
-                    border-radius: 50%;
-                    height: calc(100% - var(--ball-size) * 0.02);
-                    width: calc(100% - var(--ball-size) * 0.02);
-                    top: calc(var(--ball-size) * 0.01);
-                    left: calc(var(--ball-size) * 0.01);
-                    background-color: rgb(156, 159, 179);
-                }
-            }
-
-            .moon-cut-in {
-                transform: translateX(0%);
             }
         }
     }
@@ -901,6 +920,10 @@
         }
 
         20% {
+            transform: translate(calc(var(--box-height) * 1.75), calc(var(--box-height) * -0.35)) rotate(255deg);
+        }
+
+        40% {
             transform: translate(calc(var(--box-height) * -0.625), calc(var(--box-height) * 0.3)) rotate(255deg);
         }
 
