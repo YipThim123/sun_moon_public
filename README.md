@@ -1,5 +1,4 @@
-# Vue 3 + Vite
+# 组件版
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+2025/01/25
+此版本为组件版，按钮中的各模块分开，便于二次开发
