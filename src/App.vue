@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-  import SunMoon from './components/SunMoon.vue';
+  import SunMoon from './components/SunMoon/SunMoon.vue';
   import { ref } from 'vue';
 
   const status = ref(false)

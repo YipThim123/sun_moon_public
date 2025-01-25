@@ -1,0 +1,26 @@
+.sun-moon-button-box {
+    /* 按钮宽度 */
+    --box-width: calc(var(--box-height) * 2.5);
+    /* 小球直径 */
+    --ball-size: calc(var(--box-height) * 0.85);
+    /* 小球距左右长度 */
+    --ball-margin: calc(var(--box-height) * 0.1);
+    /* 小球移动时间 */
+    --move-duration: 1.2s;
+    /* 小球变色时间 */
+    --opacity-duration: calc(var(--move-duration) / 1.8);
+    /* 天空变色时间 */
+    --sky-duration: var(--move-duration);
+    /* 近云朵基准直径 */
+    --near-cloud-size: var(--ball-size);
+    /* 近云朵移动时间 */
+    --near-cloud-duration: calc(var(--move-duration) * 1.2);
+    /* 远云朵基准直径 */
+    --far-cloud-size: var(--ball-size);
+    /* 远云朵移动时间 */
+    --far-cloud-duration: calc(var(--move-duration) * 1.3);
+    /* 星星基准大小 */
+    --star-size: calc(var(--ball-size) / 15);
+    /* 星星闪烁时间 */
+    --twinkle-duration: 1s;
+}
