@@ -319,11 +319,9 @@
     // 旋转计时重复执行器
     const rotateInterval = ref(null)
     const moonRotate = () => {
-        console.log('292')
         rotateStatus.value = true
         if (!rotateInterval.value) {
             rotateInterval.value = setInterval(() => {
-                console.log('265')
                 if (!hoverStatus.value || !ballStatus.value) {
                     rotateStatus.value = false
                     clearInterval(rotateInterval.value)
