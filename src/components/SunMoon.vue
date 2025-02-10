@@ -70,7 +70,6 @@
     </div>
 </template>
 
-
 <script setup>
     import { ref, reactive, computed } from "vue";
 
