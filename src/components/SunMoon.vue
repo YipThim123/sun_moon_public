@@ -105,10 +105,12 @@
     })
 
     const parsedSize = computed(() => {
-        if (typeof props.size[-2, -1] !== 'px') {
-            return `${props.size}px`;
+        if (typeof props.size === "string") {
+            if (props.size.slice(-2) === 'px') {
+                return props.size;
+            }
         }
-        return props.size;
+        return `${props.size}px`
     });
 
     const ballStatus = ref(false);
