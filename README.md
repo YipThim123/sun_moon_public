@@ -11,10 +11,10 @@
 项目代码只在 [/src/components/SunMoon](https://github.com/YipThim123/sun_moon_public/tree/component/src/components/SunMoon)目录中。 
 1. ``SunMoon.vue`` -- 父组件，调用各组件，含有计算动画的函数。
 2. ``css/variable`` -- 按钮中各样式的变量
-3. ``ball.vue`` -- 按钮中的球体部分，即太阳、月亮
-4. ``halo.vue`` -- 按钮中的光晕部分
-5. ``sky.vue`` -- 按钮中的天空部分（只涉及背景颜色）
-6. ``starCloud.vue`` -- 按钮中的背景细节部分，星星与云朵
+3. ``components/ball.vue`` -- 按钮中的球体部分，即太阳、月亮
+4. ``components/halo.vue`` -- 按钮中的光晕部分
+5. ``components/sky.vue`` -- 按钮中的天空部分（只涉及背景颜色）
+6. ``components/starCloud.vue`` -- 按钮中的背景细节部分，星星与云朵
 
 若需要直接使用请切换至[develop](https://github.com/YipThim123/sun_moon_public/tree/develop)分支
 
