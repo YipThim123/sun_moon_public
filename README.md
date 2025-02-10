@@ -8,7 +8,16 @@
 ## 使用说明
 当前分支为组件版，即项目中的各部分代码封装在各组件中，便于理解与修改，提供给各位同学进行二次开发。 \
 \
-<font color=#008000>若需要直接使用请切换至[develop](https://github.com/YipThim123/sun_moon_public/tree/develop)分支</font>
+项目代码只在 [/src/components/SunMoon](https://github.com/YipThim123/sun_moon_public/tree/component/src/components/SunMoon)目录中。 
+1. ``SunMoon.vue`` -- 父组件，调用各组件，含有计算动画的函数。
+2. ``css/variable`` -- 按钮中各样式的变量
+3. ``ball.vue`` -- 按钮中的球体部分，即太阳、月亮
+4. ``halo.vue`` -- 按钮中的光晕部分
+5. ``sky.vue`` -- 按钮中的天空部分（只涉及背景颜色）
+6. ``starCloud.vue`` -- 按钮中的背景细节部分，星星与云朵
+
+若需要直接使用请切换至[develop](https://github.com/YipThim123/sun_moon_public/tree/develop)分支
+
 ## 更新日志
 
 ### 2025/01/25
