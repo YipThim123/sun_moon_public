@@ -18,7 +18,7 @@ _**Vue3项目**_ \
 
 <script setup>
   import SunMoon from './components/SunMoon.vue'
-<script>
+</script>
 ```
 
 ### 传参
