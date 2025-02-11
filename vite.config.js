@@ -7,5 +7,5 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
   },
-  base:"/sunMoon/", //设置项目的根目录
+  base:"/sun_moon_public/", //设置项目的根目录
 })
