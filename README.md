@@ -17,19 +17,24 @@ _**Vue3项目**_ \
 </template>
 
 <script setup>
-  import SunMoon from './components/SunMoon.vue';
+  import SunMoon from './components/SunMoon.vue'
 <script>
 ```
 
 ### 传参
-1. size: 按钮高度，接收String和Number类型，例如：'100'，'100px', 100
-2. ball: 月球出现动画，接收String类型，可选值：'cut-in'，'gradient'，分别为切入，渐变
-3. halo: 光晕运动效果，接收String类型，可选值：'flex'，'linear'，分别为弹性运动，线性运动
-4. delay: 鼠标悬浮动画的延迟时间，接收String和Number类型，可选值：'cut-in'，'gradient'，分别为切入，渐变
-5. finish: 鼠标移出后的月亮效果，接收String类型，可选值：'now'，'delay'，分别为瞬间回到原位，等待转至终点
+| 参数    | 说明               | 类型            | 可选值                            |
+|---------|------------------|---------------|-------------------------------------|
+| size    | 按钮高度           | String / Number | 例如：'100'，'100px', 100          |
+| ball    | 月球出现动画       | String          | 'cut-in'（切入）, 'gradient'（渐变）  |
+| halo    | 光晕运动效果       | String          | 'flex'（弹性运动）, 'linear'（线性运动） |
+| delay   | 悬浮动画延迟时间   | String / Number  | 例如：'2000'，2000（毫秒） |
+| finish  | 移出后月亮效果     | String          | 'now'（瞬间回位）, 'delay'（延迟至终点） |
 
 ### 事件
-@onStatus：点击按钮时触发，携带按钮的状态参数-Boolean值，false为太阳状态，即按钮位于左侧，true为月亮状态，即按钮位于右侧。
+| 事件      | 说明             | 回调参数       |  参数说明  |
+|-----------|----------------|--------------|--------------|
+| @onStatus | 点击按钮时触发  | Boolean |false：太阳状态，按钮位于左侧；true：月亮状态，按钮位于右侧|
+
 
 ```vue
 // 示例
@@ -37,9 +42,12 @@ _**Vue3项目**_ \
     <SunMoon :size="size" :ball="ball" :halo="halo" :delay="delay" :finish="finish" @onStatus="getStatus" />
 </template>
 <script setup>
+    import SunMoon from './components/SunMoon.vue'
+    import { ref } from 'vue'
+    const status = ref(false)
     const getStatus = (value) => {
-        status.value = value;
-    };
+        status.value = value
+    }
 </script>
 ```
 
